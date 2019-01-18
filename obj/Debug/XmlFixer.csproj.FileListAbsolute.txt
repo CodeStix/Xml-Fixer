@@ -18,3 +18,9 @@ C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.csprojAssemblyRefer
 C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.csproj.CoreCompileInputs.cache
 C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.exe
 C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.pdb
+F:\Documents\GitHub\Xml-Fixer\XmlFixer\Xml-Fixer\bin\Debug\XmlFixer.exe.config
+F:\Documents\GitHub\Xml-Fixer\XmlFixer\Xml-Fixer\obj\Debug\XmlFixer.exe
+F:\Documents\GitHub\Xml-Fixer\XmlFixer\Xml-Fixer\obj\Debug\XmlFixer.pdb
+F:\Documents\GitHub\Xml-Fixer\XmlFixer\Xml-Fixer\bin\Debug\XmlFixer.exe
+F:\Documents\GitHub\Xml-Fixer\XmlFixer\Xml-Fixer\bin\Debug\XmlFixer.pdb
+F:\Documents\GitHub\Xml-Fixer\XmlFixer\Xml-Fixer\obj\Debug\XmlFixer.csprojResolveAssemblyReference.cache

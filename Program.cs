@@ -6,50 +6,122 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO.Compression;
 
 namespace XmlFixer
 {
     class Program
     {
-        public static bool pauseOnError = true;
-        public static bool beautify = false;
+        public static bool pauseOnError = false;
+        public static bool beautify = true;
+        //public static bool hide = false;
+        private static bool isWordDocument = false;
+        public static string fixedFileLocation = @".\fixed.xml";
 
         private const char INDENT_PREFIX = ' ';
+        private const string WORD_EXTRACT_DIRECTORY = "document";
+        private const string INTERN_WORD_XML_FILE = @".\" + WORD_EXTRACT_DIRECTORY + @"\word\document.xml";
+        private const string WORD_FIXED_FILE = @".\fixed.docx";
+
 
         public static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Xml-Fixer");
+            Console.WriteLine("\tVersion: " + "1.0");
+            Console.WriteLine("\tby Stijn Rogiest; 2019 (c)\n");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine();
+            Thread.Sleep(1000);
+
             //args = new string[] { "test.txt" };
 
-            string file = null;
+            string t = string.Join("", args);
+            if (t.Contains("-?") || t.Contains("--help") || t.Contains("-h")) 
+            {
+                Console.WriteLine("Usage: " + "XmlFixer.exe [-u --ugly] [-p --not-pause] [-h -? --help] <filename>");
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
+            if (t.Contains("-u") || t.Contains("--ugly"))
+            {
+                t = t.Replace("-u", "");
+
+                beautify = false;
+            }
+            if (t.Contains("-p") || t.Contains("--error-pause"))
+            {
+                t = t.Replace("-p", "");
+
+                pauseOnError = true;
+            }
+
+            string redFile = null;
 
             if (args.Length <= 0)
             {
-                Console.WriteLine("Please drag *.xml file on top on this.");
+                Console.WriteLine("Please drag *.xml file on top of executable. Or paste the filename here:");
 
-                file = Console.ReadLine();
-
-                return;
+                redFile = Console.ReadLine();
             }
             else
             {
-                file = string.Join(" ", args);
+                redFile = t;
             }
 
-            string input = File.ReadAllText(file);
-            StreamWriter sw = new StreamWriter("beautiful.txt");
-            StreamWriter swf = new StreamWriter("fixed.txt");
+            if (!File.Exists(redFile))
+            {
+                Die("The given file does not exist.");
+                return;
+            }
+
+            if (redFile.EndsWith(".docx"))
+            {
+                Console.WriteLine("A word document was given, extracting...");
+
+                try
+                {
+                    ZipFile.ExtractToDirectory(redFile, WORD_EXTRACT_DIRECTORY);
+                }
+                catch(Exception e)
+                {
+                    Die("Could not extract: " + e.Message);
+                    return;
+                }
+
+                Console.WriteLine("A word document was extracted.");
+
+                beautify = false;
+                isWordDocument = true;
+                redFile = INTERN_WORD_XML_FILE;
+                fixedFileLocation = INTERN_WORD_XML_FILE;
+
+                if (!File.Exists(redFile))
+                {
+                    Die("The Word document could not be fixed.");
+                    return;
+                }
+            }
+
+            string input = File.ReadAllText(redFile);
+            StreamWriter swf = new StreamWriter(fixedFileLocation);
 
             Stack<string> toClose = new Stack<string>();
+            Queue<string> poppedTags = new Queue<string>();
             string line = "";
             int lineNumber = 1;
             bool opened = false;
             bool ender = false;
             string indent = "";
             string tagName = "";
-            //string poppedTagName = "";
             bool foundTagName = false;
             int level = 0;
             char prev = char.MinValue;
+            /*Parallel.For(0, input.Length, (i) =>
+            {
+
+            });*/
+
             for(int i = 0; i < input.Length; i++)
             {
                 char c = input[i];
@@ -84,7 +156,7 @@ namespace XmlFixer
                     bool exists = toClose.Contains(tagName);
                     bool hereIsError = false;
                     bool doWriteLine = true;
-                    Queue<string> poppedTags = new Queue<string>();
+                    poppedTags.Clear();
 
                     if (ender)
                     {
@@ -116,18 +188,19 @@ namespace XmlFixer
                     if (hereIsError)
                         Console.ForegroundColor = ConsoleColor.Red;
                     Console.Title = tagName;
-                    Console.Write(lineNumber++ + ")\t" + (hereIsError ? "!!" : "  "));
+                    if (pauseOnError)
+                        Console.Write(lineNumber++ + ")\t" + (hereIsError ? "!!" : "  "));
                     Console.Write(indent);
                     if (beautify)
                         Console.WriteLine(line);
                     else
                         Console.Write(line);
 
-                    sw.Write(indent);
+                    /*sw.Write(indent);
                     if (beautify)
                         sw.WriteLine(line);
                     else
-                        sw.Write(line);
+                        sw.Write(line);*/
 
                     swf.Write(indent);
 
@@ -136,6 +209,7 @@ namespace XmlFixer
                         if (!exists)
                         {
                             Console.Title = $"The tag '{ tagName }' was closed before it was declared. Remove it.";
+
                             if (pauseOnError)
                                 Console.ReadKey();
                         }
@@ -147,6 +221,7 @@ namespace XmlFixer
 
                                 Console.Title = $"The '{ str }' tag must end before the '{ tagName }' tag!";
                                 swf.WriteLine($"{ indent }</{ str }>");
+
                                 if (pauseOnError)
                                     Console.ReadKey();
                             }
@@ -163,6 +238,8 @@ namespace XmlFixer
                             swf.Write(line);
                     }
 
+                    line = "";
+
                     if (prev != '/' && prev != '?' && !ender)
                     {
                         level++;
@@ -172,7 +249,9 @@ namespace XmlFixer
                         toClose.Push(tagName);
                     }
 
-                    line = "";
+                    if (prev == '?')
+                        line += '\n';
+                   
                     tagName = "";
                     foundTagName = false;
                     opened = false;
@@ -182,16 +261,14 @@ namespace XmlFixer
                 prev = c;
             }
 
-            sw.Close();
-
-           
             while (toClose.Count > 0)
             {
                 string pop = toClose.Pop();
 
                 Console.Title = "Tag not closed: " + pop;
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(lineNumber++ + ")\t" + "!!");
+                if (pauseOnError)
+                    Console.WriteLine(lineNumber++ + ")\t" + "!!");
                 //Console.ForegroundColor = ConsoleColor.Yellow;
                 //Console.WriteLine($"{ indent }</{ pop }>");
                 swf.WriteLine($"{ indent }</{ pop }>");
@@ -206,14 +283,40 @@ namespace XmlFixer
 
             swf.Close();
 
+            if (isWordDocument)
+            {
+                Console.WriteLine("Archiving Word document...");
+
+                try
+                {
+                    ZipFile.CreateFromDirectory(WORD_EXTRACT_DIRECTORY, WORD_FIXED_FILE, CompressionLevel.Optimal, false);
+                }
+                catch(Exception e)
+                {
+                    Die("Could not re-archive Word document: " + e.Message);
+                    return;
+                }
+
+                Console.WriteLine("The fixed Word document was created.");
+            }
+
             Console.ResetColor();
             Console.BackgroundColor = ConsoleColor.DarkBlue;
             Console.WriteLine(" -------------------- END OF FILE -------------------- ");
-            Console.WriteLine("Fixed file: fixed.xml");
+            Console.WriteLine("See starting directory to see fixed files. Fixed xml: " + fixedFileLocation);
+            if (isWordDocument)
+                Console.WriteLine("The Word document was probably fixed, location: " + WORD_FIXED_FILE);
             Console.WriteLine("Press enter to exit...");
             Console.ReadKey();
         }
 
+        public static void Die(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(message);
+            Console.ReadKey();
+            Environment.Exit(0);
+        }
 
         /*public static Dictionary<string, int> tags = new Dictionary<string, int>();
 
