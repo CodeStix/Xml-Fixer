@@ -11,3 +11,10 @@ F:\Documents\Visual Studio 2015\Projects\XmlFixer\XmlFixer\obj\Debug\XmlFixer.pd
 F:\Documents\Visual Studio 2015\Projects\XmlFixer\XmlFixer\bin\Debug\XmlFixer.exe
 F:\Documents\Visual Studio 2015\Projects\XmlFixer\XmlFixer\bin\Debug\XmlFixer.pdb
 F:\Documents\Visual Studio 2015\Projects\XmlFixer\XmlFixer\obj\Debug\XmlFixer.csprojResolveAssemblyReference.cache
+C:\Users\admin\Documents\GitHub\Xml-Fixer\bin\Debug\XmlFixer.exe.config
+C:\Users\admin\Documents\GitHub\Xml-Fixer\bin\Debug\XmlFixer.exe
+C:\Users\admin\Documents\GitHub\Xml-Fixer\bin\Debug\XmlFixer.pdb
+C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.csprojAssemblyReference.cache
+C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.csproj.CoreCompileInputs.cache
+C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.exe
+C:\Users\admin\Documents\GitHub\Xml-Fixer\obj\Debug\XmlFixer.pdb

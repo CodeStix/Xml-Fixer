@@ -11,11 +11,14 @@ namespace XmlFixer
 {
     class Program
     {
+        public static bool pauseOnError = true;
+        public static bool beautify = false;
+
         private const char INDENT_PREFIX = ' ';
 
         public static void Main(string[] args)
         {
-            args = new string[] { "test.txt" };
+            //args = new string[] { "test.txt" };
 
             string file = null;
 
@@ -87,14 +90,18 @@ namespace XmlFixer
                     {
                         if (exists)
                         {
-                            if (indent.Length >= 1)
+                            if (beautify && indent.Length >= 1)
                                 indent = indent.Substring(1);
 
-                            poppedTags.Enqueue(toClose.Pop());
-                            while (poppedTags.Peek() != tagName)
+                            while (toClose.Peek() != tagName)
+                            {
+                                poppedTags.Enqueue(toClose.Pop());
+                            }
+                            toClose.Pop();
+
+                            if (poppedTags.Count > 0)
                             {
                                 hereIsError = true;
-                                poppedTags.Enqueue(toClose.Pop());
                             }
 
                             level--;
@@ -107,23 +114,20 @@ namespace XmlFixer
                     }
 
                     if (hereIsError)
-                    {
-                        /*Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"{ indent }</{ poppedTagName }>");
-
-                        if (indent.Length >= 1)
-                            indent = indent.Substring(1);*/
-
                         Console.ForegroundColor = ConsoleColor.Red;
-                    }
-
                     Console.Title = tagName;
                     Console.Write(lineNumber++ + ")\t" + (hereIsError ? "!!" : "  "));
                     Console.Write(indent);
-                    Console.WriteLine(line);
+                    if (beautify)
+                        Console.WriteLine(line);
+                    else
+                        Console.Write(line);
 
                     sw.Write(indent);
-                    sw.WriteLine(line);
+                    if (beautify)
+                        sw.WriteLine(line);
+                    else
+                        sw.Write(line);
 
                     swf.Write(indent);
 
@@ -132,6 +136,8 @@ namespace XmlFixer
                         if (!exists)
                         {
                             Console.Title = $"The tag '{ tagName }' was closed before it was declared. Remove it.";
+                            if (pauseOnError)
+                                Console.ReadKey();
                         }
                         else
                         {
@@ -141,22 +147,27 @@ namespace XmlFixer
 
                                 Console.Title = $"The '{ str }' tag must end before the '{ tagName }' tag!";
                                 swf.WriteLine($"{ indent }</{ str }>");
+                                if (pauseOnError)
+                                    Console.ReadKey();
                             }
-
-
                         }
 
-                        Console.ReadKey();
                         Console.ResetColor();
                     }
 
                     if (doWriteLine)
-                        swf.WriteLine(line);
+                    {
+                        if (beautify)
+                            swf.WriteLine(line);
+                        else
+                            swf.Write(line);
+                    }
 
                     if (prev != '/' && prev != '?' && !ender)
                     {
                         level++;
-                        indent += INDENT_PREFIX;
+                        if (beautify)
+                            indent += INDENT_PREFIX;
 
                         toClose.Push(tagName);
                     }
@@ -185,11 +196,12 @@ namespace XmlFixer
                 //Console.WriteLine($"{ indent }</{ pop }>");
                 swf.WriteLine($"{ indent }</{ pop }>");
 
-                if (indent.Length >= 1)
+                if (beautify && indent.Length >= 1)
                     indent = indent.Substring(1);
                 level--;
 
-                Console.ReadKey();
+                if (pauseOnError)
+                    Console.ReadKey();
             }
 
             swf.Close();
